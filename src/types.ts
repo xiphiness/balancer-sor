@@ -22,10 +22,12 @@ export interface Path {
 export interface Price {
     price?: BigNumber;
     id?: string;
+    path?: Path;
     maxAmount?: string;
     swap?: string[];
     amounts?: BigNumber[];
     bestPathsIds?: string[];
+    bestPaths?: Path[];
 }
 
 export type Swap = {

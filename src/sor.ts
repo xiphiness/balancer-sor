@@ -62,18 +62,24 @@ export const smartOrderRouterMultiHop = (
         }
     );
 
-    pricesOfInterest = calculateBestPathIdsForPricesOfInterest(
+    // console.log("getPricesOfInterest");
+    // pricesOfInterest.forEach((poi, i) => {
+    //      console.log(poi);
+    //      console.log("poi.spotPrice");
+    //      console.log(poi.spotPrice.toString());
+    //      console.log("poi.slippage");
+    //      console.log(poi.slippage.toString());
+    // });
+
+    pricesOfInterest = calculateBestPathsForPricesOfInterest(
+        sortedPaths,
         pricesOfInterest
     );
 
     pricesOfInterest.forEach(poi => {
-        let pathIds = poi.bestPathsIds;
+        let selectedPaths = poi.bestPaths;
         let price = poi.price;
-        poi.amounts = getSwapAmountsForPriceOfInterest(
-            sortedPaths,
-            pathIds,
-            price
-        );
+        poi.amounts = getSwapAmountsForPriceOfInterest(selectedPaths, price);
     });
 
     // console.log("pricesOfInterest");
@@ -81,8 +87,8 @@ export const smartOrderRouterMultiHop = (
 
     let bestTotalReturn: BigNumber = new BigNumber(0);
     let highestPoiNotEnough: boolean = true;
-    let pathIds, totalReturn;
-    let bestSwapAmounts, bestPathIds, swapAmounts;
+    let selectedPaths, totalReturn;
+    let bestSwapAmounts, bestPaths, swapAmounts;
 
     let bmin = paths.length + 1;
     for (let b = 1; b <= bmin; b++) {
@@ -109,7 +115,7 @@ export const smartOrderRouterMultiHop = (
                 .reduce((a, b) => a.plus(b));
 
             if (totalInputAmountAfter.isGreaterThan(totalSwapAmount)) {
-                pathIds = priceBefore.bestPathsIds.slice(0, b);
+                selectedPaths = priceBefore.bestPaths.slice(0, b);
                 swapAmountsPriceBefore = priceBefore.amounts.slice(0, b);
                 swapAmountsPriceAfter = priceAfter.amounts.slice(0, b);
 
@@ -136,18 +142,17 @@ export const smartOrderRouterMultiHop = (
         }
 
         if (highestPoiNotEnough) {
-            pathIds = [];
+            selectedPaths = [];
             swapAmounts = [];
         }
 
         // console.log("calcTotalReturn")
-        totalReturn = calcTotalReturn(paths, swapType, pathIds, swapAmounts);
+        totalReturn = calcTotalReturn(swapType, selectedPaths, swapAmounts);
 
         // Calculates the number of pools in all the paths to include the gas costs
         let totalNumberOfPools = 0;
-        pathIds.forEach((pathId, i) => {
+        selectedPaths.forEach((path, i) => {
             // Find path data
-            const path = paths.find(p => p.id === pathId);
             totalNumberOfPools += path.poolPairDataList.length;
         });
 
@@ -181,7 +186,7 @@ export const smartOrderRouterMultiHop = (
 
         if (improvementCondition === true) {
             bestSwapAmounts = swapAmounts;
-            bestPathIds = pathIds;
+            bestPaths = selectedPaths;
             bestTotalReturn = totalReturn;
         } else {
             break;
@@ -190,7 +195,7 @@ export const smartOrderRouterMultiHop = (
 
     // console.log("Best solution found")
     // console.log(bestSwapAmounts.toString());
-    // console.log(bestPathIds);
+    // console.log(bestPaths);
     // console.log(bestTotalReturn.toString());
 
     //// Prepare swap data from paths
@@ -204,14 +209,7 @@ export const smartOrderRouterMultiHop = (
             swapAmount
         );
 
-        // Find path data
-        const path = paths.find(p => p.id === bestPathIds[i]);
-        if (!path) {
-            throw new Error(
-                '[Invariant] No pool found for selected pool index' +
-                    bestPathIds[i]
-            );
-        }
+        const path = selectedPaths[i];
 
         // // TODO: remove. To debug only!
         // printSpotPricePathBeforeAndAfterSwap(path, swapType, swapAmount);
@@ -310,87 +308,94 @@ export const smartOrderRouterMultiHop = (
 
 function getPricesOfInterest(sortedPaths: Path[], swapType: string): Price[] {
     let pricesOfInterest: Price[] = [];
-    sortedPaths.forEach((b, i) => {
+    sortedPaths.forEach((thisPath, i) => {
         // New pool
         let pi: Price = {};
-        pi.price = b.spotPrice;
-        pi.id = b.id;
+        pi.price = thisPath.spotPrice;
+        pi.id = thisPath.id;
+        pi.path = thisPath;
         pricesOfInterest.push(pi);
 
         // Max amount for this pool
         pi = {};
-        pi.price = b.spotPrice.plus(
-            bmul(b.limitAmount, bmul(b.slippage, b.spotPrice))
+        pi.price = thisPath.spotPrice.plus(
+            bmul(
+                thisPath.limitAmount,
+                bmul(thisPath.slippage, thisPath.spotPrice)
+            )
         );
-        pi.maxAmount = b.id;
+        pi.maxAmount = thisPath.id;
         pricesOfInterest.push(pi);
 
         for (let k = 0; k < i; k++) {
             let prevPath = sortedPaths[k];
 
             if (
-                bmul(b.slippage, b.spotPrice).isLessThan(
+                bmul(thisPath.slippage, thisPath.spotPrice).isLessThan(
                     bmul(prevPath.slippage, prevPath.spotPrice)
                 )
             ) {
                 let amountCross = bdiv(
-                    b.spotPrice.minus(prevPath.spotPrice),
+                    thisPath.spotPrice.minus(prevPath.spotPrice),
                     bmul(prevPath.slippage, prevPath.spotPrice).minus(
-                        bmul(b.slippage, b.spotPrice)
+                        bmul(thisPath.slippage, thisPath.spotPrice)
                     )
                 );
 
                 if (
-                    amountCross.isLessThan(b.limitAmount) &&
+                    amountCross.isLessThan(thisPath.limitAmount) &&
                     amountCross.isLessThan(prevPath.limitAmount)
                 ) {
                     let epiA: Price = {};
-                    epiA.price = b.spotPrice.plus(
-                        bmul(amountCross, bmul(b.slippage, b.spotPrice))
+                    epiA.price = thisPath.spotPrice.plus(
+                        bmul(
+                            amountCross,
+                            bmul(thisPath.slippage, thisPath.spotPrice)
+                        )
                     );
-                    epiA.swap = [prevPath.id, b.id];
+                    epiA.swap = [prevPath.id, thisPath.id];
                     pricesOfInterest.push(epiA);
                 }
 
                 if (
-                    prevPath.limitAmount.isLessThan(b.limitAmount) &&
+                    prevPath.limitAmount.isLessThan(thisPath.limitAmount) &&
                     prevPath.limitAmount.isLessThan(amountCross)
                 ) {
                     let epiB: Price = {};
-                    epiB.price = b.spotPrice.plus(
+                    epiB.price = thisPath.spotPrice.plus(
                         bmul(
                             prevPath.limitAmount,
-                            bmul(b.slippage, b.spotPrice)
+                            bmul(thisPath.slippage, thisPath.spotPrice)
                         )
                     );
-                    epiB.swap = [prevPath.id, b.id];
+                    epiB.swap = [prevPath.id, thisPath.id];
                     pricesOfInterest.push(epiB);
                 }
 
                 if (
-                    b.limitAmount.isLessThan(prevPath.limitAmount) &&
-                    amountCross.isLessThan(b.limitAmount)
+                    thisPath.limitAmount.isLessThan(prevPath.limitAmount) &&
+                    amountCross.isLessThan(thisPath.limitAmount)
                 ) {
                     let epiC: Price = {};
                     epiC.price = prevPath.spotPrice.plus(
                         bmul(
-                            b.limitAmount,
+                            thisPath.limitAmount,
                             bmul(prevPath.slippage, prevPath.spotPrice)
                         )
                     );
-                    epiC.swap = [b.id, prevPath.id];
+                    epiC.swap = [thisPath.id, prevPath.id];
                     pricesOfInterest.push(epiC);
                 }
             } else {
-                if (prevPath.limitAmount.isLessThan(b.limitAmount)) {
+                if (prevPath.limitAmount.isLessThan(thisPath.limitAmount)) {
                     let epiD: Price = {};
-                    epiD.price = b.spotPrice.plus(
+                    epiD.price = thisPath.spotPrice.plus(
                         bmul(
                             prevPath.limitAmount,
-                            bmul(b.slippage, b.spotPrice)
+                            bmul(thisPath.slippage, thisPath.spotPrice)
                         )
                     );
-                    epiD.swap = [prevPath.id, b.id];
+                    epiD.swap = [prevPath.id, thisPath.id];
                     pricesOfInterest.push(epiD);
                 }
             }
@@ -400,24 +405,33 @@ function getPricesOfInterest(sortedPaths: Path[], swapType: string): Price[] {
     return pricesOfInterest;
 }
 
-function calculateBestPathIdsForPricesOfInterest(
+function calculateBestPathsForPricesOfInterest(
+    paths: Path[],
     pricesOfInterest: Price[]
 ): Price[] {
+    let bestPaths = [];
     let bestPathsIds = [];
     pricesOfInterest.forEach((e, i) => {
         if (e.id != null) {
             bestPathsIds.push(e.id);
+            bestPaths.push(e.path);
         } else if (e.swap) {
             let index1 = bestPathsIds.indexOf(e.swap[0]);
             let index2 = bestPathsIds.indexOf(e.swap[1]);
 
             if (index1 != -1) {
                 if (index2 != -1) {
-                    let bestPath1 = bestPathsIds[index1];
-                    let bestPath2 = bestPathsIds[index2];
-                    bestPathsIds[index1] = bestPath2;
-                    bestPathsIds[index2] = bestPath1;
+                    let bestPath1 = bestPaths[index1];
+                    let bestPath2 = bestPaths[index2];
+                    bestPaths[index1] = bestPath2;
+                    bestPaths[index2] = bestPath1;
+
+                    let bestPathId1 = bestPathsIds[index1];
+                    let bestPathId2 = bestPathsIds[index2];
+                    bestPathsIds[index1] = bestPathId2;
+                    bestPathsIds[index2] = bestPathId1;
                 } else {
+                    bestPaths[index1] = paths[e.swap[1]];
                     bestPathsIds[index1] = e.swap[1];
                 }
             }
@@ -429,23 +443,19 @@ function calculateBestPathIdsForPricesOfInterest(
                 'ERROR: poolID or swap not found in pricesOfInterest'
             );
         }
-        pricesOfInterest[i].bestPathsIds = bestPathsIds.slice();
-        // console.log(bestPathsIds)
+        pricesOfInterest[i].bestPaths = bestPaths.slice();
+        // console.log(bestPaths)
     });
 
     return pricesOfInterest;
 }
 
 function getSwapAmountsForPriceOfInterest(
-    paths: Path[],
-    pathIds: string[],
+    selectedPaths: Path[],
     poi: BigNumber
 ): BigNumber[] {
     let swapAmounts: BigNumber[] = [];
-    pathIds.forEach((bid, i) => {
-        let path = paths.find(obj => {
-            return obj.id === bid;
-        });
+    selectedPaths.forEach((path, i) => {
         let inputAmount = bdiv(
             poi.minus(path.spotPrice),
             bmul(path.slippage, path.spotPrice)
@@ -459,17 +469,13 @@ function getSwapAmountsForPriceOfInterest(
 }
 
 export const calcTotalReturn = (
-    paths: Path[],
     swapType: string,
-    pathIds: string[],
+    selectedPaths: Path[],
     swapAmounts: BigNumber[]
 ): BigNumber => {
     let path;
     let totalReturn = new BigNumber(0);
-    pathIds.forEach((b, i) => {
-        path = paths.find(obj => {
-            return obj.id === b;
-        });
+    selectedPaths.forEach((path, i) => {
         totalReturn = totalReturn.plus(
             getReturnAmountSwapPath(path, swapType, swapAmounts[i])
         );
