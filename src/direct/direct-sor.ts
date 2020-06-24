@@ -20,7 +20,8 @@ export const smartOrderRouter = (
     swapType: string,
     targetInputAmount: BigNumber,
     maxBalancers: number,
-    costOutputToken: BigNumber
+    costOutputToken: BigNumber,
+    poolThresholdPercentage = bnum(0.05)
 ): SwapAmount[] => {
     balancers.forEach(b => {
         b.spotPrice = getSpotPrice(b);
@@ -136,13 +137,25 @@ export const smartOrderRouter = (
     let totalSwapAmount: BigNumber = new BigNumber(0);
     let dust: BigNumber = new BigNumber(0);
 
+    let threshAmt = targetInputAmount.times(poolThresholdPercentage);
+
     bestInputAmounts.forEach((amount, i) => {
-        let swap: SwapAmount = {
-            pool: bestBalancerIds[i],
-            amount: amount,
-        };
-        totalSwapAmount = totalSwapAmount.plus(amount);
-        swaps.push(swap);
+        if (amount.gt(threshAmt)) {
+            let swap: SwapAmount = {
+                pool: bestBalancerIds[i],
+                amount: amount,
+            };
+            totalSwapAmount = totalSwapAmount.plus(amount);
+            swaps.push(swap);
+        }
+    });
+
+    let norm = targetInputAmount.div(totalSwapAmount);
+
+    totalSwapAmount = new BigNumber(0);
+    swaps.forEach(swap => {
+        swap.amount = swap.amount.times(norm);
+        totalSwapAmount = totalSwapAmount.plus(swap.amount);
     });
 
     if (swaps.length > 0) {
@@ -159,7 +172,8 @@ export const smartOrderRouterEpsOfInterest = (
     targetInputAmount: BigNumber,
     maxBalancers: number,
     costOutputToken: BigNumber,
-    epsOfInterest: EffectivePrice[]
+    epsOfInterest: EffectivePrice[],
+    poolThresholdPercentage = bnum(0.05)
 ): SwapAmount[] => {
     let bestTotalOutput: BigNumber = new BigNumber(0);
     let highestEpNotEnough: boolean = true;
@@ -252,13 +266,24 @@ export const smartOrderRouterEpsOfInterest = (
     let totalSwapAmount: BigNumber = new BigNumber(0);
     let dust: BigNumber = new BigNumber(0);
 
+    let threshAmt = targetInputAmount.times(poolThresholdPercentage);
+
     bestInputAmounts.forEach((amount, i) => {
-        let swap: SwapAmount = {
-            pool: bestBalancerIds[i],
-            amount: amount,
-        };
-        totalSwapAmount = totalSwapAmount.plus(amount);
-        swaps.push(swap);
+        if (amount.gt(threshAmt)) {
+            let swap: SwapAmount = {
+                pool: bestBalancerIds[i],
+                amount: amount,
+            };
+            totalSwapAmount = totalSwapAmount.plus(amount);
+            swaps.push(swap);
+        }
+    });
+
+    let norm = targetInputAmount.div(totalSwapAmount);
+    totalSwapAmount = new BigNumber(0);
+    swaps.forEach(swap => {
+        swap.amount = swap.amount.times(norm);
+        totalSwapAmount = totalSwapAmount.plus(swap.amount);
     });
 
     if (swaps.length > 0) {

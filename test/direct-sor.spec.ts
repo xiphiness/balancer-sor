@@ -131,7 +131,7 @@ describe('Test direct SOR (legacy version with direct pools only) using allPools
         assert.equal(allPools.pools.length, 59, 'Should be 59 pools');
     });
 
-    it('Direct SOR - WETH->DAI, swapExactIn', async () => {
+    it('Direct SOR - WETH->DAI, swapExactIn 0% Filter', async () => {
         console.time('findPoolsWithTokens');
         const allPoolsReturned = allPools; // Replicates sor.getAllPublicSwapPools() call
         const pools = findPoolsWithTokens(allPoolsReturned, WETH, DAI);
@@ -146,7 +146,8 @@ describe('Test direct SOR (legacy version with direct pools only) using allPools
             'swapExactIn',
             amountIn,
             4,
-            new BigNumber(0)
+            new BigNumber(0),
+            bnum(0)
         );
         console.timeEnd('smartOrderRouter');
 
@@ -184,7 +185,7 @@ describe('Test direct SOR (legacy version with direct pools only) using allPools
         );
     });
 
-    it('Direct SOR - WETH->DAI, swapExactOut', async () => {
+    it('Direct SOR - WETH->DAI, swapExactOut 0% Filter', async () => {
         var amountOut = new BigNumber(1000).times(BONE);
         const allPoolsReturned = allPools; // Replicates sor.getAllPublicSwapPools() call
         const pools = findPoolsWithTokens(allPoolsReturned, WETH, DAI);
@@ -194,7 +195,8 @@ describe('Test direct SOR (legacy version with direct pools only) using allPools
             'swapExactOut',
             amountOut,
             4,
-            new BigNumber(0)
+            new BigNumber(0),
+            bnum(0)
         );
 
         let totalOut = BigNumber(0);
@@ -245,7 +247,8 @@ describe('Test direct SOR (legacy version with direct pools only) using allPools
             'swapExactIn',
             amountOut,
             4,
-            new BigNumber(0)
+            new BigNumber(0),
+            bnum(0)
         );
 
         var totalOutPut = calcTotalInput(swaps, pools);
@@ -265,11 +268,349 @@ describe('Test direct SOR (legacy version with direct pools only) using allPools
             'swapExactIn',
             amountOut,
             4,
-            new BigNumber(0)
+            new BigNumber(0),
+            bnum(0)
         );
 
         var totalOutPut = calcTotalInput(swaps, pools);
         assert.equal(pools.length, 0, 'Should have 0 pools with tokens.');
         assert.equal(swaps.length, 0, 'Should have 0 swaps.');
+    });
+
+    it('Direct SOR - WETH->DAI, swapExactIn With 5% Filter', async () => {
+        console.time('findPoolsWithTokens');
+        const allPoolsReturned = allPools; // Replicates sor.getAllPublicSwapPools() call
+        const pools = findPoolsWithTokens(allPoolsReturned, WETH, DAI);
+        console.timeEnd('findPoolsWithTokens');
+
+        var amountIn = new BigNumber(1).times(BONE);
+
+        console.time('smartOrderRouter');
+        // Find best swaps
+        var swaps = sor.smartOrderRouter(
+            pools,
+            'swapExactIn',
+            amountIn,
+            4,
+            bnum(0),
+            bnum(0.05) // 5%
+        );
+        console.timeEnd('smartOrderRouter');
+
+        let totalIn = BigNumber(0);
+        swaps.forEach(swap => {
+            totalIn = totalIn.plus(swap.amount);
+            // console.log(`${swap.pool} ${swap.amount.toString()} ${swap.amount.div(amountIn).toNumber()}`);
+        });
+
+        var totalOutPut = calcTotalOutput(swaps, pools);
+
+        assert.equal(pools.length, 10, 'Should have 10 pools with tokens.');
+        assert.equal(2, swaps.length, 'Should have 2 swaps.');
+        assert.equal(
+            swaps[0].pool,
+            '0x1B09173A0ffBAD1cb7670b1a640013c0facFB71F'
+        );
+        assert.equal(
+            swaps[1].pool,
+            '0xE5D1fAB0C5596ef846DCC0958d6D0b20E1Ec4498'
+        );
+
+        assert.equal(
+            swaps[0].amount.toString(),
+            '695354901226480374.060948061482499971'
+        );
+        assert.equal(
+            swaps[1].amount.toString(),
+            '304645098773519625.939051938517500029'
+        );
+        assert.equal(totalIn.toString(), amountIn.toString());
+        assert.equal(
+            '202.860501550354103266',
+            utils.formatEther(totalOutPut.toString()),
+            'Total Out Should Match'
+        );
+    });
+
+    it('Direct SOR - WETH->DAI, swapExactOut With 5% Filter', async () => {
+        var amountOut = new BigNumber(1000).times(BONE);
+        const allPoolsReturned = allPools; // Replicates sor.getAllPublicSwapPools() call
+        const pools = findPoolsWithTokens(allPoolsReturned, WETH, DAI);
+
+        // Find best swaps
+        var swaps = sor.smartOrderRouter(
+            pools,
+            'swapExactOut',
+            amountOut,
+            4,
+            new BigNumber(0),
+            bnum(0.05) // 5%
+        );
+
+        let totalOut = BigNumber(0);
+        swaps.forEach(swap => {
+            totalOut = totalOut.plus(swap.amount);
+            // console.log(`${swap.pool} ${swap.amount.toString()} ${swap.amount.div(amountOut).toString()}`);
+        });
+
+        var totalInput = calcTotalInput(swaps, pools);
+
+        assert.equal(pools.length, 10, 'Should have 10 pools with tokens.');
+        assert.equal(swaps.length, 3, 'Should have 3 swaps.');
+        assert.equal(totalOut.toString(), amountOut.toString());
+        assert.equal(
+            swaps[0].pool,
+            '0x9B208194Acc0a8cCB2A8dcafEACfbB7dCc093F81'
+        );
+        assert.equal(
+            swaps[1].pool,
+            '0xE5D1fAB0C5596ef846DCC0958d6D0b20E1Ec4498'
+        );
+        assert.equal(
+            swaps[2].pool,
+            '0x1B09173A0ffBAD1cb7670b1a640013c0facFB71F'
+        );
+
+        assert.equal(
+            swaps[0].amount.toString(),
+            '487135040421719865217.731368486369525092'
+        );
+        assert.equal(
+            swaps[1].amount.toString(),
+            '301431406482205735641.89433797863968912'
+        );
+        assert.equal(
+            swaps[2].amount.toString(),
+            '211433553096074399140.374293534990785788'
+        );
+        assert.equal(
+            utils.formatEther(totalInput.toString()),
+            '4.979263939141511533'
+        );
+
+        /*
+        !!! MANUAL CHECK
+        var swapsCheck = sor.smartOrderRouter(
+            pools,
+            'swapExactOut',
+            amountOut,
+            4,
+            new BigNumber(0)
+        );
+
+        let totalOutCheck = BigNumber(0);
+        swapsCheck.forEach(swap => {
+            totalOutCheck = totalOutCheck.plus(swap.amount);
+            console.log(`${swap.pool} ${swap.amount.toString()} ${swap.amount.div(amountOut).toNumber()}`);
+        });
+
+        let tIfiltered = swapsCheck[0].amount.plus(swapsCheck[1].amount).plus(swapsCheck[2].amount);
+        console.log(`Total Filtered: ${tIfiltered.toString()}`)
+
+        let norm = amountOut.div(tIfiltered);
+        console.log(`Norm: ${norm.toString()}`)
+
+        let swap1norm = swapsCheck[0].amount.times(norm);
+        let swap2norm = swapsCheck[1].amount.times(norm);
+        let swap3norm = swapsCheck[2].amount.times(norm);
+        console.log(swap1norm.toString());
+        console.log(swap2norm.toString());
+        console.log(swap3norm.toString());
+        console.log(swap1norm.plus(swap2norm).plus(swap3norm).toString())
+        console.log(tIfiltered.times(norm).toString())
+        */
+    });
+
+    it('Direct SOR - WETH->DAI, swapExactOut With 30% Filter', async () => {
+        var amountOut = new BigNumber(1000).times(BONE);
+        const allPoolsReturned = allPools; // Replicates sor.getAllPublicSwapPools() call
+        const pools = findPoolsWithTokens(allPoolsReturned, WETH, DAI);
+
+        // Find best swaps
+        var swaps = sor.smartOrderRouter(
+            pools,
+            'swapExactOut',
+            amountOut,
+            4,
+            new BigNumber(0),
+            bnum(0.3) // 30%
+        );
+
+        let totalOut = BigNumber(0);
+        swaps.forEach(swap => {
+            totalOut = totalOut.plus(swap.amount);
+            // console.log(`${swap.pool} ${swap.amount.toString()} ${swap.amount.div(amountOut).toString()}`);
+        });
+
+        var totalInput = calcTotalInput(swaps, pools);
+
+        assert.equal(pools.length, 10, 'Should have 10 pools with tokens.');
+        assert.equal(swaps.length, 1, 'Should have 1 swaps.');
+        assert.equal(totalOut.toString(), amountOut.toString());
+        assert.equal(
+            swaps[0].pool,
+            '0x9B208194Acc0a8cCB2A8dcafEACfbB7dCc093F81'
+        );
+
+        assert.equal(swaps[0].amount.toString(), amountOut.toString());
+        assert.equal(
+            utils.formatEther(totalInput.toString()),
+            '5.013779937429339477'
+        );
+
+        /*
+        // !!! MANUAL CHECK
+        var swapsCheck = sor.smartOrderRouter(
+            pools,
+            'swapExactOut',
+            amountOut,
+            4,
+            new BigNumber(0)
+        );
+
+        let totalOutCheck = BigNumber(0);
+        swapsCheck.forEach(swap => {
+            totalOutCheck = totalOutCheck.plus(swap.amount);
+            console.log(`${swap.pool} ${swap.amount.toString()} ${swap.amount.div(amountOut).toNumber()}`);
+        });
+
+        let tIfiltered = swapsCheck[0].amount.plus(swapsCheck[1].amount).plus(swapsCheck[2].amount);
+        console.log(`Total Filtered: ${tIfiltered.toString()}`)
+
+        let norm = amountOut.div(tIfiltered);
+        console.log(`Norm: ${norm.toString()}`)
+
+        let swap1norm = swapsCheck[0].amount.times(norm);
+        let swap2norm = swapsCheck[1].amount.times(norm);
+        let swap3norm = swapsCheck[2].amount.times(norm);
+        console.log(swap1norm.toString());
+        console.log(swap2norm.toString());
+        console.log(swap3norm.toString());
+        console.log(swap1norm.plus(swap2norm).plus(swap3norm).toString())
+        console.log(tIfiltered.times(norm).toString())
+        */
+    });
+
+    it('Direct SOR EPS Version - WETH->DAI, swapExactIn', async () => {
+        console.time('findPoolsWithTokens');
+        const allPoolsReturned = allPools; // Replicates sor.getAllPublicSwapPools() call
+        const pools = findPoolsWithTokens(allPoolsReturned, WETH, DAI);
+        console.timeEnd('findPoolsWithTokens');
+
+        var amountIn = new BigNumber(1).times(BONE);
+
+        console.time('smartOrderRouter');
+
+        const balancers = sor.processBalancers(pools, 'swapExactIn');
+        const epsOfInterest = sor.processEpsOfInterest(
+            balancers,
+            'swapExactIn'
+        );
+        // Find best swaps
+        var swaps = sor.smartOrderRouterEpsOfInterest(
+            balancers,
+            'swapExactIn',
+            amountIn,
+            4,
+            new BigNumber(0),
+            epsOfInterest,
+            bnum(0)
+        );
+        console.timeEnd('smartOrderRouter');
+
+        let totalIn = BigNumber(0);
+        swaps.forEach(swap => {
+            totalIn = totalIn.plus(swap.amount);
+            // console.log(`${swap.pool} ${swap.amount.toString()} ${swap.amount.div(amountIn).toString()}`);
+        });
+
+        var totalOutPut = calcTotalOutput(swaps, pools);
+
+        assert.equal(pools.length, 10, 'Should have 10 pools with tokens.');
+        assert.equal(swaps.length, 3, 'Should have 3 swaps.');
+        assert.equal(
+            swaps[0].pool,
+            '0x1B09173A0ffBAD1cb7670b1a640013c0facFB71F'
+        );
+        assert.equal(
+            swaps[1].pool,
+            '0xE5D1fAB0C5596ef846DCC0958d6D0b20E1Ec4498'
+        );
+        assert.equal(
+            swaps[2].pool,
+            '0xec577a919FCa1b682f584A50b1048331ef0f30DD'
+        );
+        assert.equal(swaps[0].amount.toString(), '695192183339931523');
+        assert.equal(swaps[1].amount.toString(), '304573809700080353');
+        assert.equal(swaps[2].amount.toString(), '234006959988124');
+        assert.equal(totalIn.toString(), amountIn.toString());
+
+        assert.equal(
+            utils.formatEther(totalOutPut.toString()),
+            '202.860557251722913901',
+            'Total Out Should Match'
+        );
+    });
+
+    it('Direct SOR EPS Version - WETH->DAI, swapExactIn With 5% Filter', async () => {
+        console.time('findPoolsWithTokens');
+        const allPoolsReturned = allPools; // Replicates sor.getAllPublicSwapPools() call
+        const pools = findPoolsWithTokens(allPoolsReturned, WETH, DAI);
+        console.timeEnd('findPoolsWithTokens');
+
+        var amountIn = new BigNumber(1).times(BONE);
+
+        const balancers = sor.processBalancers(pools, 'swapExactIn');
+        const epsOfInterest = sor.processEpsOfInterest(
+            balancers,
+            'swapExactIn'
+        );
+
+        console.time('smartOrderRouter');
+        // Find best swaps
+        var swaps = sor.smartOrderRouterEpsOfInterest(
+            balancers,
+            'swapExactIn',
+            amountIn,
+            4,
+            bnum(0),
+            epsOfInterest,
+            bnum(0.05) // 5%
+        );
+        console.timeEnd('smartOrderRouter');
+
+        let totalIn = BigNumber(0);
+        swaps.forEach(swap => {
+            totalIn = totalIn.plus(swap.amount);
+            // console.log(`${swap.pool} ${swap.amount.toString()} ${swap.amount.div(amountIn).toNumber()}`);
+        });
+
+        var totalOutPut = calcTotalOutput(swaps, pools);
+
+        assert.equal(pools.length, 10, 'Should have 10 pools with tokens.');
+        assert.equal(2, swaps.length, 'Should have 2 swaps.');
+        assert.equal(
+            swaps[0].pool,
+            '0x1B09173A0ffBAD1cb7670b1a640013c0facFB71F'
+        );
+        assert.equal(
+            swaps[1].pool,
+            '0xE5D1fAB0C5596ef846DCC0958d6D0b20E1Ec4498'
+        );
+
+        assert.equal(
+            swaps[0].amount.toString(),
+            '695354901226480374.060948061482499971'
+        );
+        assert.equal(
+            swaps[1].amount.toString(),
+            '304645098773519625.939051938517500029'
+        );
+        assert.equal(totalIn.toString(), amountIn.toString());
+        assert.equal(
+            '202.860501550354103266',
+            utils.formatEther(totalOutPut.toString()),
+            'Total Out Should Match'
+        );
     });
 });

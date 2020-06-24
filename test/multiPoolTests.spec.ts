@@ -44,6 +44,7 @@ describe('Multi-Pool Tests', () => {
             'swapExactIn',
             amountIn,
             10,
+            new BigNumber(0),
             new BigNumber(0)
         );
 
