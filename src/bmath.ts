@@ -162,12 +162,20 @@ function bpowApprox(
     return sum;
 }
 
-export function smul(a: BigNumber, b: BigNumber): BigNumber {
-    return a.times(b).div(BONE);
+export function smul(
+    a: BigNumber,
+    b: BigNumber,
+    precision: BigNumber = BONE
+): BigNumber {
+    return a.times(b).div(precision);
     // return a.times(b);
 }
 
-export function sdiv(a: BigNumber, b: BigNumber): BigNumber {
-    return a.div(b).times(BONE);
+export function sdiv(
+    a: BigNumber,
+    b: BigNumber,
+    precision: BigNumber = BONE
+): BigNumber {
+    return a.div(b).times(precision);
     // return a.div(b);
 }
