@@ -6,7 +6,7 @@ import {
     getReturnAmountSwapPath,
     parsePoolPairData,
 } from './helpers';
-import { bmul, bdiv, bnum, BONE } from './bmath';
+import { smul, sdiv, bnum, BONE } from './bmath';
 import { BigNumber } from './utils/bignumber';
 import { PoolPairData, Path, Swap, Price, EffectivePrice } from './types';
 import { ethers, utils } from 'ethers';
@@ -26,6 +26,7 @@ export const smartOrderRouterMultiHop = (
     maxPools: number,
     costReturnToken: BigNumber
 ): [Swap[][], BigNumber] => {
+    console.log(`@@@@@@@@@@ mad??`);
     console.time(`1`);
     paths.forEach(b => {
         b.spotPrice = getSpotPricePath(pools, b);
@@ -158,7 +159,7 @@ export const smartOrderRouterMultiHop = (
         if (totalNumberOfPools <= maxPools) {
             if (swapType === 'swapExactIn') {
                 totalReturn = totalReturn.minus(
-                    bmul(
+                    smul(
                         new BigNumber(totalNumberOfPools).times(BONE),
                         costReturnToken
                     )
@@ -168,7 +169,7 @@ export const smartOrderRouterMultiHop = (
                     bestTotalReturn.isEqualTo(new BigNumber(0));
             } else {
                 totalReturn = totalReturn.plus(
-                    bmul(
+                    smul(
                         new BigNumber(totalNumberOfPools).times(BONE),
                         costReturnToken
                     )
@@ -359,16 +360,22 @@ export function processEpsOfInterestMultiHop(
     sortedPaths: Path[],
     swapType: string
 ): EffectivePrice[] {
+    console.log(`sortedPaths length: ${sortedPaths.length}`);
+    console.time(`getPricesOfInterest`);
     let pricesOfInterest = getPricesOfInterest(sortedPaths, swapType).sort(
         (a, b) => {
             return a.price.minus(b.price).toNumber();
         }
     );
+    console.timeEnd(`getPricesOfInterest`);
 
+    console.time(`calculateBestPathIdsForPricesOfInterest`);
     pricesOfInterest = calculateBestPathIdsForPricesOfInterest(
         pricesOfInterest
     );
+    console.timeEnd(`calculateBestPathIdsForPricesOfInterest`);
 
+    console.time(`pricesOfInterestLoop`);
     pricesOfInterest.forEach(poi => {
         let pathIds = poi.bestPathsIds;
         let price = poi.price;
@@ -378,6 +385,9 @@ export function processEpsOfInterestMultiHop(
             price
         );
     });
+    console.timeEnd(`pricesOfInterestLoop`);
+
+    console.log(`pricesOfInterest length: ${pricesOfInterest.length}`);
 
     return pricesOfInterest;
 }
@@ -476,7 +486,7 @@ export const smartOrderRouterMultiHopEpsOfInterest = (
         if (totalNumberOfPools <= maxPools) {
             if (swapType === 'swapExactIn') {
                 totalReturn = totalReturn.minus(
-                    bmul(
+                    smul(
                         new BigNumber(totalNumberOfPools).times(BONE),
                         costReturnToken
                     )
@@ -486,7 +496,7 @@ export const smartOrderRouterMultiHopEpsOfInterest = (
                     bestTotalReturn.isEqualTo(new BigNumber(0));
             } else {
                 totalReturn = totalReturn.plus(
-                    bmul(
+                    smul(
                         new BigNumber(totalNumberOfPools).times(BONE),
                         costReturnToken
                     )
@@ -657,7 +667,7 @@ function getPricesOfInterest(sortedPaths: Path[], swapType: string): Price[] {
         // Max amount for this pool
         pi = {};
         pi.price = b.spotPrice.plus(
-            bmul(b.limitAmount, bmul(b.slippage, b.spotPrice))
+            smul(b.limitAmount, smul(b.slippage, b.spotPrice))
         );
         pi.maxAmount = b.id;
         pricesOfInterest.push(pi);
@@ -666,14 +676,14 @@ function getPricesOfInterest(sortedPaths: Path[], swapType: string): Price[] {
             let prevPath = sortedPaths[k];
 
             if (
-                bmul(b.slippage, b.spotPrice).isLessThan(
-                    bmul(prevPath.slippage, prevPath.spotPrice)
+                smul(b.slippage, b.spotPrice).isLessThan(
+                    smul(prevPath.slippage, prevPath.spotPrice)
                 )
             ) {
-                let amountCross = bdiv(
+                let amountCross = sdiv(
                     b.spotPrice.minus(prevPath.spotPrice),
-                    bmul(prevPath.slippage, prevPath.spotPrice).minus(
-                        bmul(b.slippage, b.spotPrice)
+                    smul(prevPath.slippage, prevPath.spotPrice).minus(
+                        smul(b.slippage, b.spotPrice)
                     )
                 );
 
@@ -683,7 +693,7 @@ function getPricesOfInterest(sortedPaths: Path[], swapType: string): Price[] {
                 ) {
                     let epiA: Price = {};
                     epiA.price = b.spotPrice.plus(
-                        bmul(amountCross, bmul(b.slippage, b.spotPrice))
+                        smul(amountCross, smul(b.slippage, b.spotPrice))
                     );
                     epiA.swap = [prevPath.id, b.id];
                     pricesOfInterest.push(epiA);
@@ -695,9 +705,9 @@ function getPricesOfInterest(sortedPaths: Path[], swapType: string): Price[] {
                 ) {
                     let epiB: Price = {};
                     epiB.price = b.spotPrice.plus(
-                        bmul(
+                        smul(
                             prevPath.limitAmount,
-                            bmul(b.slippage, b.spotPrice)
+                            smul(b.slippage, b.spotPrice)
                         )
                     );
                     epiB.swap = [prevPath.id, b.id];
@@ -710,9 +720,9 @@ function getPricesOfInterest(sortedPaths: Path[], swapType: string): Price[] {
                 ) {
                     let epiC: Price = {};
                     epiC.price = prevPath.spotPrice.plus(
-                        bmul(
+                        smul(
                             b.limitAmount,
-                            bmul(prevPath.slippage, prevPath.spotPrice)
+                            smul(prevPath.slippage, prevPath.spotPrice)
                         )
                     );
                     epiC.swap = [b.id, prevPath.id];
@@ -722,9 +732,9 @@ function getPricesOfInterest(sortedPaths: Path[], swapType: string): Price[] {
                 if (prevPath.limitAmount.isLessThan(b.limitAmount)) {
                     let epiD: Price = {};
                     epiD.price = b.spotPrice.plus(
-                        bmul(
+                        smul(
                             prevPath.limitAmount,
-                            bmul(b.slippage, b.spotPrice)
+                            smul(b.slippage, b.spotPrice)
                         )
                     );
                     epiD.swap = [prevPath.id, b.id];
@@ -785,9 +795,9 @@ function getSwapAmountsForPriceOfInterest(
             return obj.id === bid;
         });
 
-        let inputAmount = bdiv(
+        let inputAmount = sdiv(
             poi.minus(path.spotPrice),
-            bmul(path.slippage, path.spotPrice)
+            smul(path.slippage, path.spotPrice)
         );
         if (path.limitAmount.isLessThan(inputAmount)) {
             inputAmount = path.limitAmount;
@@ -848,7 +858,7 @@ function getExactSwapAmounts(
 
     let deltaTimesTarget: BigNumber[] = [];
     deltaBeforeAfterAmounts.forEach((a, i) => {
-        let ratio = bdiv(
+        let ratio = sdiv(
             totalSwapAmountWithRoundingErrors.minus(totalInputBefore),
             deltaTotalInput
         );
@@ -860,7 +870,7 @@ function getExactSwapAmounts(
         // console.log("mult")
         // console.log(mult)
 
-        let deltaAmount = bmul(ratio, a);
+        let deltaAmount = smul(ratio, a);
         deltaTimesTarget.push(deltaAmount);
     });
 

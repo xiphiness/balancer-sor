@@ -4,8 +4,8 @@ export const BONE = new BigNumber(10).pow(18);
 export const TWOBONE = BONE.times(new BigNumber(2));
 const BPOW_PRECISION = BONE.idiv(new BigNumber(10).pow(10));
 
-export const MAX_IN_RATIO = BONE.times(new BigNumber(0.499999999999999)); // Leave some room for bignumber rounding errors
-export const MAX_OUT_RATIO = BONE.times(new BigNumber(0.333333333333333)); // Leave some room for bignumber rounding errors
+export const MAX_IN_RATIO = BONE.times(new BigNumber(0.499)); // Leave some room for bignumber rounding errors
+export const MAX_OUT_RATIO = BONE.times(new BigNumber(0.333)); // Leave some room for bignumber rounding errors
 
 export function scale(input: BigNumber, decimalPlaces: number): BigNumber {
     const scalePow = new BigNumber(decimalPlaces.toString());
@@ -160,4 +160,12 @@ function bpowApprox(
     }
 
     return sum;
+}
+
+export function smul(a: BigNumber, b: BigNumber): BigNumber {
+    return a.times(b).div(BONE);
+}
+
+export function sdiv(a: BigNumber, b: BigNumber): BigNumber {
+    return a.div(b).times(BONE);
 }

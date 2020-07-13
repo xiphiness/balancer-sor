@@ -2,11 +2,11 @@
 // Includes timing data.
 import { expect, assert } from 'chai';
 import 'mocha';
-const sor = require('../src');
+const sor = require('../../src');
 const BigNumber = require('bignumber.js');
 const { utils } = require('ethers');
-const allPools = require('./allPools.json');
-import { BONE } from '../src/bmath';
+const allPools = require('../allPools.json');
+import { BONE, bmul, bdiv } from '../../src/bmath';
 
 const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'; // WETH
 const DAI = '0x6B175474E89094C44Da98b954EedeAC495271d0F'; // DAI
@@ -21,6 +21,50 @@ BigNumber.config({
 });
 
 describe('Testing Timings', () => {
+    it('Should compare bmath vs times', async () => {
+        let first = new BigNumber(1000.77).times(BONE);
+        let second = new BigNumber(20.77).times(BONE);
+        console.log(bmul(first, second).toString());
+        console.log(
+            first
+                .times(second)
+                .div(BONE)
+                .toString()
+        );
+        console.time('bnum');
+        for (let i = 0; i < 1000; i++) {
+            bmul(first, second);
+        }
+        console.timeEnd('bnum');
+
+        console.time('times');
+        for (let i = 0; i < 1000; i++) {
+            // first.times(second);
+            first.times(second).div(BONE);
+        }
+        console.timeEnd('times');
+
+        console.log(bdiv(first, second).toString());
+        console.log(
+            first
+                .div(second)
+                .times(BONE)
+                .toString()
+        );
+
+        console.time('bdiv');
+        for (let i = 0; i < 1000; i++) {
+            bdiv(first, second);
+        }
+        console.timeEnd('bdiv');
+
+        console.time('div');
+        for (let i = 0; i < 1000; i++) {
+            first.div(second).times(BONE);
+        }
+        console.timeEnd('div');
+    });
+
     it('Full Multihop SOR, WETH>DAI, swapExactIn, EPS Version With Subgraph Pool Data', async () => {
         const amountIn = new BigNumber(1).times(BONE);
 
