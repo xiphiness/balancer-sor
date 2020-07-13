@@ -164,8 +164,10 @@ function bpowApprox(
 
 export function smul(a: BigNumber, b: BigNumber): BigNumber {
     return a.times(b).div(BONE);
+    // return a.times(b);
 }
 
 export function sdiv(a: BigNumber, b: BigNumber): BigNumber {
     return a.div(b).times(BONE);
+    // return a.div(b);
 }
