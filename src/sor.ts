@@ -1,23 +1,12 @@
 import {
-    getSpotPrice,
-    getSlippageLinearizedSpotPriceAfterSwap,
-    getLimitAmountSwap,
     getSpotPricePath,
     getSlippageLinearizedSpotPriceAfterSwapPath,
     getLimitAmountSwapPath,
-    getNormalizedLiquidity,
     getReturnAmountSwap,
     getReturnAmountSwapPath,
     parsePoolPairData,
 } from './helpers';
-import {
-    bmul,
-    bdiv,
-    bnum,
-    BONE,
-    calcOutGivenIn,
-    calcInGivenOut,
-} from './bmath';
+import { bmul, bdiv, bnum, BONE } from './bmath';
 import { BigNumber } from './utils/bignumber';
 import { PoolPairData, Path, Swap, Price, EffectivePrice } from './types';
 import { ethers, utils } from 'ethers';
@@ -37,6 +26,7 @@ export const smartOrderRouterMultiHop = (
     maxPools: number,
     costReturnToken: BigNumber
 ): [Swap[][], BigNumber] => {
+    console.time(`1`);
     paths.forEach(b => {
         b.spotPrice = getSpotPricePath(pools, b);
         b.slippage = getSlippageLinearizedSpotPriceAfterSwapPath(
@@ -46,21 +36,30 @@ export const smartOrderRouterMultiHop = (
         );
         b.limitAmount = getLimitAmountSwapPath(pools, b, swapType);
     });
+    console.timeEnd(`1`);
 
+    console.time(`2`);
+    // !!!!!!! combine with above?
     let sortedPaths = paths.sort((a, b) => {
         return a.spotPrice.minus(b.spotPrice).toNumber();
     });
+    console.timeEnd(`2`);
 
+    console.time(`3`);
     let pricesOfInterest = getPricesOfInterest(sortedPaths, swapType).sort(
         (a, b) => {
             return a.price.minus(b.price).toNumber();
         }
     );
-
+    console.timeEnd(`3`);
+    console.time(`4`);
     pricesOfInterest = calculateBestPathIdsForPricesOfInterest(
         pricesOfInterest
     );
+    console.timeEnd(`4`);
 
+    console.time(`5`);
+    console.log(`pricesOfInterest length: ${pricesOfInterest.length}`);
     pricesOfInterest.forEach(poi => {
         let pathIds = poi.bestPathsIds;
         let price = poi.price;
@@ -70,6 +69,7 @@ export const smartOrderRouterMultiHop = (
             price
         );
     });
+    console.timeEnd(`5`);
     // console.log("pricesOfInterest");
     // console.log(pricesOfInterest);
 
@@ -77,7 +77,7 @@ export const smartOrderRouterMultiHop = (
     let highestPoiNotEnough: boolean = true;
     let pathIds, totalReturn;
     let bestSwapAmounts, bestPathIds, swapAmounts;
-
+    console.time(`6`);
     let bmin = paths.length + 1;
     for (let b = 1; b <= bmin; b++) {
         totalReturn = 0;
@@ -187,6 +187,7 @@ export const smartOrderRouterMultiHop = (
             break;
         }
     }
+    console.timeEnd(`6`);
 
     // console.log("Best solution found")
     // console.log(bestSwapAmounts.toString());
@@ -199,6 +200,7 @@ export const smartOrderRouterMultiHop = (
     let dust: BigNumber = new BigNumber(0);
     let lenghtFirstPath;
     // TODO: change all inputAmount variable names to swapAmount
+    console.time(`7`);
     bestSwapAmounts.forEach((swapAmount, i) => {
         totalSwapAmountWithRoundingErrors = totalSwapAmountWithRoundingErrors.plus(
             swapAmount
@@ -300,10 +302,12 @@ export const smartOrderRouterMultiHop = (
         // the new paths use these pools they will have the updated balances
         getReturnAmountSwapPath(pools, path, swapType, swapAmount);
     });
+    console.timeEnd(`7`);
 
     // Since the individual swapAmounts for each path are integers, the sum of all swapAmounts
     // might not be exactly equal to the totalSwapAmount the user requested. We need to correct that rounding error
     // and we do that by adding the rounding error to the first path.
+    console.time(`8`);
     if (swaps.length > 0) {
         dust = totalSwapAmount.minus(totalSwapAmountWithRoundingErrors);
         if (swapType === 'swapExactIn') {
@@ -324,6 +328,8 @@ export const smartOrderRouterMultiHop = (
                     .toString(); // Add dust to second swapExactOut
         }
     }
+    console.timeEnd(`8`);
+
     return [swaps, bestTotalReturn];
 };
 
@@ -773,10 +779,12 @@ function getSwapAmountsForPriceOfInterest(
     poi: BigNumber
 ): BigNumber[] {
     let swapAmounts: BigNumber[] = [];
+    console.log(`pathIds length: ${pathIds.length}`);
     pathIds.forEach((bid, i) => {
         let path = paths.find(obj => {
             return obj.id === bid;
         });
+
         let inputAmount = bdiv(
             poi.minus(path.spotPrice),
             bmul(path.slippage, path.spotPrice)
