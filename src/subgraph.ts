@@ -93,7 +93,7 @@ export async function getTokenPairs(token) {
 export async function getAllPublicSwapPools() {
     const query = `
       {
-          pools (first: 1000, where: {publicSwap: true}) {
+          pools (first: 1000, where: {publicSwap: true, active: true}) {
             id
             swapFee
             totalWeight
