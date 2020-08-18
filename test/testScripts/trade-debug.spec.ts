@@ -4,9 +4,8 @@ import { expect, assert } from 'chai';
 import 'mocha';
 const sor = require('../../src');
 const BigNumber = require('bignumber.js');
-const { utils } = require('ethers');
 import { BONE } from '../../src/bmath';
-import { JsonRpcProvider } from 'ethers/providers';
+import { JsonRpcProvider } from '@ethersproject/providers';
 import * as bmath from '../../src/bmath';
 
 const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'.toLowerCase(); // WETH

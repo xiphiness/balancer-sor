@@ -1,5 +1,5 @@
 import fetch from 'isomorphic-fetch';
-import { ethers } from 'ethers';
+import { getAddress } from '@ethersproject/address';
 import * as bmath from './bmath';
 import { PoolPairData, Path } from './types';
 import { BigNumber } from './utils/bignumber';
@@ -12,8 +12,8 @@ const SUBGRAPH_URL =
 export async function getPoolsWithTokens(tokenIn, tokenOut) {
     // GraphQL is case-sensitive
     // Always use checksum addresses
-    tokenIn = ethers.utils.getAddress(tokenIn);
-    tokenOut = ethers.utils.getAddress(tokenOut);
+    tokenIn = getAddress(tokenIn);
+    tokenOut = getAddress(tokenOut);
 
     const query = `
       query ($tokens: [Bytes!]) {
@@ -59,7 +59,7 @@ export async function getPoolsWithTokens(tokenIn, tokenOut) {
 export async function getTokenPairs(token) {
     // GraphQL is case-sensitive
     // Always use checksum addresses
-    token = ethers.utils.getAddress(token);
+    token = getAddress(token);
 
     const query = `
       query ($token: [Bytes!]) {

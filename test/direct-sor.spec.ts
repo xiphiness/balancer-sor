@@ -4,7 +4,8 @@ import { assert } from 'chai';
 import 'mocha';
 const sor = require('../src');
 const BigNumber = require('bignumber.js');
-const { ethers, utils } = require('ethers');
+import { getAddress } from '@ethersproject/address';
+import { formatEther } from '@ethersproject/units';
 const allPools = require('./allPools.json');
 import { Pool } from '../src/direct/types';
 import { BONE, calcOutGivenIn, calcInGivenOut } from '../src/bmath';
@@ -32,7 +33,7 @@ export function scale(input: any, decimalPlaces: number): any {
 }
 
 function toChecksum(address) {
-    return ethers.utils.getAddress(address);
+    return getAddress(address);
 }
 
 // This is similar to function used in legacy Exchange app to format pool data
@@ -169,7 +170,7 @@ describe('Test direct SOR (legacy version with direct pools only) using allPools
         assert.equal(swaps.length, 3, 'Should have 3 swaps.');
         // ADD SWAP CHECK
         assert.equal(
-            utils.formatEther(totalOutPut.toString()),
+            formatEther(totalOutPut.toString()),
             '202.860557251722913901',
             'Total Out Should Match'
         );
@@ -192,7 +193,7 @@ describe('Test direct SOR (legacy version with direct pools only) using allPools
         assert.equal(pools.length, 10, 'Should have 10 pools with tokens.');
         assert.equal(swaps.length, 4, 'Should have 4 swaps.');
         assert.equal(
-            utils.formatEther(totalOutPut.toString()),
+            formatEther(totalOutPut.toString()),
             '4.978956703358553061'
         );
     });

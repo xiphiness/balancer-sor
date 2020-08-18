@@ -1,5 +1,5 @@
 import { BigNumber } from '../../../src/utils/bignumber';
-import { ethers } from 'ethers';
+import { getAddress } from '@ethersproject/address';
 import { PoolPairData, Path } from '../../../src/types';
 import { getPoolsWithSingleToken } from './subgraph';
 import {
@@ -16,7 +16,7 @@ import {
 } from '../../../src/bmath';
 
 export function toChecksum(address) {
-    return ethers.utils.getAddress(address);
+    return getAddress(address);
 }
 
 export function getLimitAmountSwap(
@@ -572,18 +572,10 @@ export const parsePoolPairData = (
     // console.log("tokenOut")
     // console.log(tokenOut)
 
-    let tI = p.tokens.find(
-        t =>
-            ethers.utils.getAddress(t.address) ===
-            ethers.utils.getAddress(tokenIn)
-    );
+    let tI = p.tokens.find(t => getAddress(t.address) === getAddress(tokenIn));
     // console.log("tI")
     // console.log(tI)
-    let tO = p.tokens.find(
-        t =>
-            ethers.utils.getAddress(t.address) ===
-            ethers.utils.getAddress(tokenOut)
-    );
+    let tO = p.tokens.find(t => getAddress(t.address) === getAddress(tokenOut));
 
     // console.log("tO")
     // console.log(tO)
@@ -633,12 +625,11 @@ function getTokensPairedToTokenWithinPools(pools, token) {
         found = false;
         for (var k = 0; k < pools[i].tokensList.length; k++) {
             if (
-                ethers.utils.getAddress(pools[i].tokensList[k]) !=
-                    ethers.utils.getAddress(token) &&
+                getAddress(pools[i].tokensList[k]) != getAddress(token) &&
                 pools[i].tokens.find(
                     t =>
-                        ethers.utils.getAddress(t.address) ===
-                        ethers.utils.getAddress(pools[i].tokensList[k])
+                        getAddress(t.address) ===
+                        getAddress(pools[i].tokensList[k])
                 ).balance != 0
             ) {
                 tokens.add(pools[i].tokensList[k]);

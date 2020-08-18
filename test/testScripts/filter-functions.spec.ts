@@ -6,7 +6,7 @@ const sor = require('../../src');
 const helpers = require('../../src/helpers');
 const comparrisonHelper = require('./utils/comparrisonHelpers');
 const BigNumber = require('bignumber.js');
-const { utils } = require('ethers');
+import { formatEther } from '@ethersproject/units';
 import { BONE } from '../../src/bmath';
 
 const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'; // WETH
@@ -184,8 +184,8 @@ describe('Test Filter Functions using full SOR Subgraph comparrions', () => {
 
         expect(sorSwaps).to.eql(sorSwapsFilter);
         assert.equal(
-            utils.formatEther(totalReturn.toString()),
-            utils.formatEther(totalReturnFilter.toString()),
+            formatEther(totalReturn.toString()),
+            formatEther(totalReturnFilter.toString()),
             'Total Out Should Match'
         );
     }).timeout(10000);

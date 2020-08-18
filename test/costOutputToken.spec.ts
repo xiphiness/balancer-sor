@@ -1,7 +1,7 @@
 // Tests costOutputToken
 require('dotenv').config();
 import { expect } from 'chai';
-import { JsonRpcProvider } from 'ethers/providers';
+import { JsonRpcProvider } from '@ethersproject/providers';
 import { BigNumber } from '../src/utils/bignumber';
 import { BONE } from '../src/bmath';
 import { calculateTotalSwapCost, getAddress } from '../src/costToken';

@@ -2,10 +2,9 @@ require('dotenv').config();
 import fetch from 'isomorphic-fetch';
 const sor = require('../../src');
 const BigNumber = require('bignumber.js');
-const { ethers, utils } = require('ethers');
 import { Pool } from '../../src/direct/types';
 import { BONE, calcOutGivenIn, calcInGivenOut } from '../../src/bmath';
-import { JsonRpcProvider } from 'ethers/providers';
+import { JsonRpcProvider } from '@ethersproject/providers';
 import _ from 'lodash'; // Import the entire lodash library
 
 async function run() {

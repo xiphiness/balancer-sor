@@ -1,6 +1,6 @@
 import { Set } from 'jsclass/src/set';
 import { BigNumber } from './utils/bignumber';
-import { ethers } from 'ethers';
+import { getAddress } from '@ethersproject/address';
 import { PoolPairData, Path } from './types';
 import {
     BONE,
@@ -16,7 +16,7 @@ import {
 } from './bmath';
 
 export function toChecksum(address) {
-    return ethers.utils.getAddress(address);
+    return getAddress(address);
 }
 
 export function getLimitAmountSwap(
@@ -425,14 +425,10 @@ export const parsePoolData = (
 
         // TODO remove since this is already being checked in the previous filters
         let balanceIn = p.tokens.find(
-            t =>
-                ethers.utils.getAddress(t.address) ===
-                ethers.utils.getAddress(tokenIn)
+            t => getAddress(t.address) === getAddress(tokenIn)
         ).balance;
         let balanceOut = p.tokens.find(
-            t =>
-                ethers.utils.getAddress(t.address) ===
-                ethers.utils.getAddress(tokenOut)
+            t => getAddress(t.address) === getAddress(tokenOut)
         ).balance;
         // TODO remove since this is already being checked in the previous filters
         if (balanceIn != 0 && balanceOut != 0) {
@@ -472,24 +468,16 @@ export const parsePoolData = (
 
         // TODO remove since this is already being checked in the previous filters
         let poolFirstHopBalanceIn = mostLiquidPoolsFirstHop[i].tokens.find(
-            t =>
-                ethers.utils.getAddress(t.address) ===
-                ethers.utils.getAddress(tokenIn)
+            t => getAddress(t.address) === getAddress(tokenIn)
         ).balance;
         let poolFirstHopBalanceOut = mostLiquidPoolsFirstHop[i].tokens.find(
-            t =>
-                ethers.utils.getAddress(t.address) ===
-                ethers.utils.getAddress(hopTokens[i])
+            t => getAddress(t.address) === getAddress(hopTokens[i])
         ).balance;
         let poolSecondHopBalanceIn = mostLiquidPoolsSecondHop[i].tokens.find(
-            t =>
-                ethers.utils.getAddress(t.address) ===
-                ethers.utils.getAddress(hopTokens[i])
+            t => getAddress(t.address) === getAddress(hopTokens[i])
         ).balance;
         let poolSecondHopBalanceOut = mostLiquidPoolsSecondHop[i].tokens.find(
-            t =>
-                ethers.utils.getAddress(t.address) ===
-                ethers.utils.getAddress(tokenOut)
+            t => getAddress(t.address) === getAddress(tokenOut)
         ).balance;
 
         // TODO remove since this is already being checked in the previous filters
@@ -535,18 +523,10 @@ export const parsePoolPairData = (
     // console.log("tokenOut")
     // console.log(tokenOut)
 
-    let tI = p.tokens.find(
-        t =>
-            ethers.utils.getAddress(t.address) ===
-            ethers.utils.getAddress(tokenIn)
-    );
+    let tI = p.tokens.find(t => getAddress(t.address) === getAddress(tokenIn));
     // console.log("tI")
     // console.log(tI)
-    let tO = p.tokens.find(
-        t =>
-            ethers.utils.getAddress(t.address) ===
-            ethers.utils.getAddress(tokenOut)
-    );
+    let tO = p.tokens.find(t => getAddress(t.address) === getAddress(tokenOut));
 
     // console.log("tO")
     // console.log(tO)
@@ -596,12 +576,11 @@ function getTokensPairedToTokenWithinPools(pools, token) {
         found = false;
         for (var k = 0; k < pools[i].tokensList.length; k++) {
             if (
-                ethers.utils.getAddress(pools[i].tokensList[k]) !=
-                    ethers.utils.getAddress(token) &&
+                getAddress(pools[i].tokensList[k]) != getAddress(token) &&
                 pools[i].tokens.find(
                     t =>
-                        ethers.utils.getAddress(t.address) ===
-                        ethers.utils.getAddress(pools[i].tokensList[k])
+                        getAddress(t.address) ===
+                        getAddress(pools[i].tokensList[k])
                 ).balance != 0
             ) {
                 tokens.add(pools[i].tokensList[k]);

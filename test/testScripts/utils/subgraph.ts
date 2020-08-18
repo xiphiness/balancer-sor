@@ -1,5 +1,5 @@
 import fetch from 'isomorphic-fetch';
-import { ethers } from 'ethers';
+import { getAddress } from '@ethersproject/address';
 import * as bmath from '../../../src/bmath';
 import { PoolPairData, Path } from '../../../src/types';
 import { BigNumber } from '../../../src/utils/bignumber';
@@ -11,7 +11,7 @@ const SUBGRAPH_URL =
 export async function getPoolsWithSingleToken(token) {
     // GraphQL is case-sensitive
     // Always use checksum addresses
-    token = ethers.utils.getAddress(token);
+    token = getAddress(token);
 
     const query = `
       query ($tokens: [Bytes!]) {
@@ -55,10 +55,7 @@ export async function getPoolsWithSingleToken(token) {
     // that have 0 balance for token
     const pools = {};
     data.pools.forEach((p, i) => {
-        if (
-            p.tokens.find(t => ethers.utils.getAddress(t.address) === token)
-                .balance != 0
-        )
+        if (p.tokens.find(t => getAddress(t.address) === token).balance != 0)
             pools[p.id] = p;
     });
 

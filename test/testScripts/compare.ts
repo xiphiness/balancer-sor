@@ -1,7 +1,8 @@
 import fetch from 'isomorphic-fetch';
 const sor = require('../../src');
 const BigNumber = require('bignumber.js');
-const { ethers, utils } = require('ethers');
+import { getAddress } from '@ethersproject/address';
+import { formatEther } from '@ethersproject/units';
 import { Pool } from '../../src/direct/types';
 import { BONE, calcOutGivenIn, calcInGivenOut } from '../../src/bmath';
 
@@ -108,7 +109,7 @@ export function scale(input: any, decimalPlaces: number): any {
 }
 
 function toChecksum(address) {
-    return ethers.utils.getAddress(address);
+    return getAddress(address);
 }
 
 // This uses legacy SOR to get direct swaps
@@ -127,7 +128,7 @@ async function directLegacy(
 
     var totalOutPut = calcTotalOutput(swaps, pools);
 
-    // console.log(`Legacy Direct Total: ${utils.formatEther(totalOutPut.toString())}`);
+    // console.log(`Legacy Direct Total: ${formatEther(totalOutPut.toString())}`);
     return [swaps, totalOutPut];
 }
 
@@ -169,7 +170,7 @@ async function SorDirectOnly(
     );
     //console.log('SOR swaps WITHOUT multi-hop');
     //console.log(sorSwapsDirectPoolsOnly);
-    // console.log(`SOR Direct Total: ${utils.formatEther(totalReturnDirectPoolsOnly.toString())}`);
+    // console.log(`SOR Direct Total: ${formatEther(totalReturnDirectPoolsOnly.toString())}`);
     return [sorSwapsDirectPoolsOnly, totalReturnDirectPoolsOnly];
 }
 
@@ -210,7 +211,7 @@ async function SorMultihop(allPoolsReturned, tokenIn, tokenOut, trade, amount) {
         new BigNumber(0)
     );
 
-    // console.log(`SOR Multihop Total: ${utils.formatEther(totalReturn.toString())}`);
+    // console.log(`SOR Multihop Total: ${formatEther(totalReturn.toString())}`);
     // console.log(`MultiHop Swaps: `);
     // console.log(sorSwaps);
     return [sorSwaps, totalReturn];
@@ -251,7 +252,7 @@ async function run() {
         for (let j = 0; j < amounts.length; j++) {
             let amount = amounts[j];
             console.log(
-                `${i}: ${utils.formatEther(amount.toString())} ${
+                `${i}: ${formatEther(amount.toString())} ${
                     poolTokens.poolTokens[tokenOneIndex].symbol
                 }/${poolTokens.poolTokens[tokenTwoIndex].symbol}`
             );
@@ -323,11 +324,11 @@ async function run() {
             );
 
             let resultObj = {
-                trade: `${trade} ${utils.formatEther(amount.toString())}`,
+                trade: `${trade} ${formatEther(amount.toString())}`,
                 pairs: `${poolTokens.poolTokens[tokenOneIndex].symbol}/${poolTokens.poolTokens[tokenTwoIndex].symbol}`,
-                directTotal: utils.formatEther(directTotal.toString()),
-                sorDirectTotal: utils.formatEther(sorDirectTotal.toString()),
-                sorMultiHopTotal: utils.formatEther(sorMultiTotal.toString()),
+                directTotal: formatEther(directTotal.toString()),
+                sorDirectTotal: formatEther(sorDirectTotal.toString()),
+                sorMultiHopTotal: formatEther(sorMultiTotal.toString()),
                 noSwapsMulti: totalMultiSwaps,
                 result: result,
             };

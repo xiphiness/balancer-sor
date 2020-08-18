@@ -4,7 +4,6 @@ import { assert } from 'chai';
 import 'mocha';
 const sor = require('../src');
 const helpers = require('../src/helpers');
-const { utils } = require('ethers');
 // Following has:
 // Both DAI&USDC: 4 pools
 // DAI, No USDC: 3

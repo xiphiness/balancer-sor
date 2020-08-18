@@ -1,7 +1,7 @@
 import { pack, keccak256 } from '@ethersproject/solidity';
 import { getCreate2Address } from '@ethersproject/address';
-import { ethers, utils } from 'ethers';
-import { Web3Provider, JsonRpcProvider } from 'ethers/providers';
+import { Contract } from '@ethersproject/contracts';
+import { Web3Provider } from '@ethersproject/providers';
 import { BigNumber } from './utils/bignumber';
 import { BONE } from './bmath';
 
@@ -33,11 +33,7 @@ export async function getOnChainReserves(
 ): Promise<any[]> {
     const uniswapV2PairAbi = require('./abi/UniswapV2Pair.json');
 
-    const pairContract = new ethers.Contract(
-        PairAddr,
-        uniswapV2PairAbi,
-        provider
-    );
+    const pairContract = new Contract(PairAddr, uniswapV2PairAbi, provider);
 
     let [reserve0, reserve1, blockTimestamp] = await pairContract.getReserves();
 

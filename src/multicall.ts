@@ -1,5 +1,7 @@
-import { ethers, utils } from 'ethers';
-import { Web3Provider } from 'ethers/providers';
+import { Interface } from '@ethersproject/abi';
+import { Contract } from '@ethersproject/contracts';
+import { Web3Provider } from '@ethersproject/providers';
+import { formatEther } from '@ethersproject/units';
 import { PoolPairData } from './types';
 import * as bmath from './bmath';
 
@@ -17,9 +19,9 @@ export async function parsePoolDataOnChain(
     const multiAbi = require('./abi/multicall.json');
     const bpoolAbi = require('./abi/bpool.json');
 
-    const multi = new ethers.Contract(multiAddress, multiAbi, provider);
+    const multi = new Contract(multiAddress, multiAbi, provider);
 
-    const iface = new ethers.utils.Interface(bpoolAbi);
+    const iface = new Interface(bpoolAbi);
 
     const promises: Promise<any>[] = [];
 
@@ -27,17 +29,17 @@ export async function parsePoolDataOnChain(
 
     let poolData: PoolPairData[] = [];
     pools.forEach(p => {
-        calls.push([p.id, iface.functions.getBalance.encode([tokenIn])]);
-        calls.push([p.id, iface.functions.getBalance.encode([tokenOut])]);
+        calls.push([p.id, iface.encodeFunctionData('getBalance', [tokenIn])]);
+        calls.push([p.id, iface.encodeFunctionData('getBalance', [tokenOut])]);
         calls.push([
             p.id,
-            iface.functions.getNormalizedWeight.encode([tokenIn]),
+            iface.encodeFunctionData('getNormalizedWeight', [tokenIn]),
         ]);
         calls.push([
             p.id,
-            iface.functions.getNormalizedWeight.encode([tokenOut]),
+            iface.encodeFunctionData('getNormalizedWeight', [tokenOut]),
         ]);
-        calls.push([p.id, iface.functions.getSwapFee.encode([])]);
+        calls.push([p.id, iface.encodeFunctionData('getSwapFee', [])]);
     });
 
     try {
@@ -61,7 +63,12 @@ export async function parsePoolDataOnChain(
                 weightOut: bmath.bnum(r[3]),
                 swapFee: bmath.bnum(r[4]),
             };
-            returnPools.push(obj);
+            if (
+                obj.balanceIn.gt(bmath.bnum(0)) &&
+                obj.balanceOut.gt(bmath.bnum(0))
+            ) {
+                returnPools.push(obj);
+            }
         });
 
         return returnPools;
@@ -82,8 +89,8 @@ export async function getAllPoolDataOnChain(
     const multiAbi = require('./abi/multicall.json');
     const bpoolAbi = require('./abi/bpool.json');
 
-    const multi = new ethers.Contract(multiAddress, multiAbi, provider);
-    const bPool = new ethers.utils.Interface(bpoolAbi);
+    const multi = new Contract(multiAddress, multiAbi, provider);
+    const iface = new Interface(bpoolAbi);
 
     const promises: Promise<any>[] = [];
 
@@ -92,17 +99,19 @@ export async function getAllPoolDataOnChain(
     for (let i = 0; i < pools.pools.length; i++) {
         let p = pools.pools[i];
 
-        calls.push([p.id, bPool.functions.getSwapFee.encode([])]);
+        calls.push([p.id, iface.encodeFunctionData('getSwapFee', [])]);
 
         // Checks all tokens for pool
         p.tokens.forEach(token => {
             calls.push([
                 p.id,
-                bPool.functions.getBalance.encode([token.address]),
+                iface.encodeFunctionData('getBalance', [token.address]),
             ]);
             calls.push([
                 p.id,
-                bPool.functions.getDenormalizedWeight.encode([token.address]),
+                iface.encodeFunctionData('getDenormalizedWeight', [
+                    token.address,
+                ]),
             ]);
         });
     }
@@ -125,7 +134,7 @@ export async function getAllPoolDataOnChain(
 
         for (let i = 0; i < poolsCopy.length; i++) {
             let p = poolsCopy[i];
-            p.swapFee = utils.formatEther(bmath.bnum(response[j]).toString());
+            p.swapFee = formatEther(bmath.bnum(response[j]).toString());
             j++;
             p.tokens.forEach(token => {
                 let balance = bmath.scale(
@@ -134,7 +143,7 @@ export async function getAllPoolDataOnChain(
                 );
                 token.balance = balance.toString();
                 j++;
-                token.denormWeight = utils.formatEther(
+                token.denormWeight = formatEther(
                     bmath.bnum(response[j]).toString()
                 );
                 j++;

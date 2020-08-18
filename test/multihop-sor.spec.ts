@@ -4,7 +4,7 @@ import { expect, assert } from 'chai';
 import 'mocha';
 const sor = require('../src');
 const BigNumber = require('bignumber.js');
-const { utils } = require('ethers');
+import { formatEther } from '@ethersproject/units';
 const allPools = require('./allPools.json');
 import { BONE } from '../src/bmath';
 import { Set } from 'jsclass/src/set';
@@ -208,7 +208,7 @@ describe('Tests Multihop SOR vs static allPools.json', () => {
         assert.equal(sorSwaps.length, 3, 'Should have 3 swaps.');
         // ADD SWAP CHECK
         assert.equal(
-            utils.formatEther(totalReturn.toString()),
+            formatEther(totalReturn.toString()),
             '202.860557251722913901',
             'Total Out Should Match'
         );
@@ -259,7 +259,7 @@ describe('Tests Multihop SOR vs static allPools.json', () => {
         assert.equal(sorSwaps.length, 4, 'Should have 4 swaps.');
         // ADD SWAP CHECK
         assert.equal(
-            utils.formatEther(totalReturn.toString()),
+            formatEther(totalReturn.toString()),
             '4.978956703358553061',
             'Total Out Should Match'
         );
@@ -316,7 +316,7 @@ describe('Tests Multihop SOR vs static allPools.json', () => {
         );
         assert.equal(sorSwaps.length, 0, 'Should have 0 swaps.');
         assert.equal(
-            utils.formatEther(totalReturn.toString()),
+            formatEther(totalReturn.toString()),
             '0.0',
             'Total Out Should Match'
         );
@@ -374,7 +374,7 @@ describe('Tests Multihop SOR vs static allPools.json', () => {
         );
         assert.equal(sorSwaps.length, 0, 'Should have 0 swaps.');
         assert.equal(
-            utils.formatEther(totalReturn.toString()),
+            formatEther(totalReturn.toString()),
             '0.0',
             'Total Out Should Match'
         );
@@ -431,7 +431,7 @@ describe('Tests Multihop SOR vs static allPools.json', () => {
         );
         assert.equal(sorSwaps.length, 2, 'Should have 2 swaps.');
         assert.equal(
-            utils.formatEther(totalReturn.toString()),
+            formatEther(totalReturn.toString()),
             '0.002932410291658511',
             'Total Out Should Match'
         );
@@ -488,7 +488,7 @@ describe('Tests Multihop SOR vs static allPools.json', () => {
         );
         assert.equal(sorSwaps.length, 2, 'Should have 2 swaps.');
         assert.equal(
-            utils.formatEther(totalReturn.toString()),
+            formatEther(totalReturn.toString()),
             '0.000000003559698325',
             'Total Out Should Match'
         );
@@ -549,7 +549,7 @@ describe('Tests Multihop SOR vs static allPools.json', () => {
         );
         assert.equal(sorSwaps.length, 2, 'Should have 2 swaps.');
         assert.equal(
-            utils.formatEther(totalReturn.toString()),
+            formatEther(totalReturn.toString()),
             '0.002932410291658511',
             'Total Out Should Match'
         );
@@ -656,7 +656,7 @@ describe('Tests Multihop SOR vs static allPools.json', () => {
         // );
         // assert.equal(sorSwaps.length, 2, 'Should have 2 swaps.');
         // assert.equal(
-        //     utils.formatEther(totalReturn.toString()),
+        //     formatEther(totalReturn.toString()),
         //     '0.002932410291658511',
         //     'Total Out Should Match'
         // );
