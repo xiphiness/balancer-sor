@@ -23,11 +23,13 @@ async function run() {
     while (i < 5) {
         console.log(allPools.pools.length);
         try {
+            console.time('multi');
             let allPoolsOnChain = await sor.getAllPoolDataOnChain(
                 allPools,
                 multicall,
                 provider
             );
+            console.timeEnd('multi');
         } catch (error) {
             break;
         }
