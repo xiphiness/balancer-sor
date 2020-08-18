@@ -1,8 +1,6 @@
 require('dotenv').config();
 import fetch from 'isomorphic-fetch';
 const sor = require('../../src');
-const BigNumber = require('bignumber.js');
-import { Pool } from '../../src/direct/types';
 import { BONE, calcOutGivenIn, calcInGivenOut } from '../../src/bmath';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import _ from 'lodash'; // Import the entire lodash library
