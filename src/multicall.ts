@@ -117,9 +117,7 @@ export async function getAllPoolDataOnChain(
     }
 
     try {
-        console.log(`Multicalls: ${calls.length}`);
         const [blockNumber, response] = await multi.aggregate(calls);
-
         let i = 0;
         let chunkResponse = [];
         let returnPools: PoolPairData[] = [];
@@ -131,7 +129,6 @@ export async function getAllPoolDataOnChain(
         // Required otherwise we overwrite original argument
         let poolsCopy = JSON.parse(JSON.stringify(pools.pools));
         let onChainPools = { pools: [] };
-
         for (let i = 0; i < poolsCopy.length; i++) {
             let p = poolsCopy[i];
             p.swapFee = formatEther(bmath.bnum(response[j]).toString());
