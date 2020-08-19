@@ -31,13 +31,15 @@ async function run() {
             console.log(error);
             break;
         }
-
+        /*
         let newPools = _.cloneDeep(allPools.pools);
 
         newPools = allPools.pools.concat(newPools);
         allPools.pools = newPools;
 
         i++;
+        */
+        i = 6;
     }
 
     return;

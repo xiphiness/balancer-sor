@@ -118,7 +118,18 @@ export async function getAllPoolDataOnChain(
 
     try {
         console.log(`Multicalls: ${calls.length}`);
+        var usage = process.cpuUsage();
+        console.log('cpu usage before: ', usage);
         const [blockNumber, response] = await multi.aggregate(calls);
+        usage = process.cpuUsage(usage);
+        console.log('Cpu usage by this process: ', usage);
+        const used = process.memoryUsage();
+        for (let key in used) {
+            console.log(
+                `${key} ${Math.round((used[key] / 1024 / 1024) * 100) / 100} MB`
+            );
+        }
+
         let i = 0;
         let chunkResponse = [];
         let returnPools: PoolPairData[] = [];
