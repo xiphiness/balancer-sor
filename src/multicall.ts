@@ -92,17 +92,11 @@ export async function getAllPoolDataOnChain(
     for (let i = 0; i < pools.pools.length; i++) {
         let p = pools.pools[i];
 
-        calls.push([p.id, bPool.functions.getSwapFee.encode([])]);
-
         // Checks all tokens for pool
         p.tokens.forEach(token => {
             calls.push([
                 p.id,
                 bPool.functions.getBalance.encode([token.address]),
-            ]);
-            calls.push([
-                p.id,
-                bPool.functions.getDenormalizedWeight.encode([token.address]),
             ]);
         });
     }
@@ -125,18 +119,13 @@ export async function getAllPoolDataOnChain(
 
         for (let i = 0; i < poolsCopy.length; i++) {
             let p = poolsCopy[i];
-            p.swapFee = utils.formatEther(bmath.bnum(response[j]).toString());
-            j++;
+
             p.tokens.forEach(token => {
                 let balance = bmath.scale(
                     bmath.bnum(response[j]),
                     -token.decimals
                 );
                 token.balance = balance.toString();
-                j++;
-                token.denormWeight = utils.formatEther(
-                    bmath.bnum(response[j]).toString()
-                );
                 j++;
             });
 
