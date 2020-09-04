@@ -10,7 +10,8 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "experimentalDecorators": true,
-        "strictNullChecks": false
+        "strictNullChecks": false,
+        "downlevelIteration": false
     },
     "include": ["src", "src/abi/*.json"]
 }

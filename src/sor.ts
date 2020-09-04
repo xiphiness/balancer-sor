@@ -19,7 +19,7 @@ import {
     calcInGivenOut,
 } from './bmath';
 import { BigNumber } from './utils/bignumber';
-import { PoolPairData, Path, Swap, Price, EffectivePrice } from './types';
+import { PoolPairData, Path, Swap, Price, EffectivePrice, GraphPool, IndexedGraphPools } from './types';
 import { ethers, utils } from 'ethers';
 
 // TODO give the option to choose a % of slippage beyond current price?
@@ -30,7 +30,7 @@ const maxAmountIn = MAX_UINT;
 const maxPrice = MAX_UINT;
 
 export const smartOrderRouterMultiHop = (
-    pools: any[],
+    pools: IndexedGraphPools,
     paths: Path[],
     swapType: string,
     totalSwapAmount: BigNumber,
@@ -337,7 +337,7 @@ export const smartOrderRouterMultiHop = (
 // TODO: build sortedPaths inside forEach loop to avoid having to do an expensive sort() operation
 export function processPaths(
     paths: Path[],
-    pools: any[],
+    pools: IndexedGraphPools,
     swapType: string
 ): Path[] {
     paths.forEach(b => {
@@ -387,7 +387,7 @@ export function processEpsOfInterestMultiHop(
 }
 
 export const smartOrderRouterMultiHopEpsOfInterest = (
-    pools: any[],
+    pools: IndexedGraphPools,
     paths: Path[],
     swapType: string,
     totalSwapAmount: BigNumber,
@@ -810,7 +810,7 @@ function getSwapAmountsForPriceOfInterest(
 }
 
 export const calcTotalReturn = (
-    pools: any[],
+    pools: IndexedGraphPools,
     paths: Path[],
     swapType: string,
     pathIds: string[],

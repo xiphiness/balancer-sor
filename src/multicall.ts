@@ -1,6 +1,6 @@
 import { ethers, utils } from 'ethers';
 import { Web3Provider } from 'ethers/providers';
-import { PoolPairData } from './types';
+import { PoolPairData, GraphPool } from './types';
 import * as bmath from './bmath';
 
 // LEGACY FUNCTION - Keep Input/Output Format
@@ -72,10 +72,10 @@ export async function parsePoolDataOnChain(
 }
 
 export async function getAllPoolDataOnChain(
-    pools,
+    pools: { pools: GraphPool[]},
     multiAddress: string,
     provider: Web3Provider
-): Promise<any> {
+): Promise<{ pools: GraphPool[]}> {
     if (pools.pools.length === 0)
         throw Error('There are no pools with selected tokens');
 
@@ -120,8 +120,8 @@ export async function getAllPoolDataOnChain(
 
         let j = 0;
         // Required otherwise we overwrite original argument
-        let poolsCopy = JSON.parse(JSON.stringify(pools.pools));
-        let onChainPools = { pools: [] };
+        let poolsCopy: GraphPool[] = JSON.parse(JSON.stringify(pools.pools));
+        let onChainPools: { pools: GraphPool[] } = { pools: [] };
 
         for (let i = 0; i < poolsCopy.length; i++) {
             let p = poolsCopy[i];

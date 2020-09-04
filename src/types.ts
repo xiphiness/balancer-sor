@@ -1,5 +1,26 @@
 import { BigNumber } from './utils/bignumber';
 
+export interface IndexedGraphPools { [id: string]: GraphPool }
+
+export interface GraphToken {
+  address: string;
+  balance: string | 0;
+  decimals: number;
+  denormWeight: string;
+  id: string;
+  symbol: string;
+}
+
+export interface GraphPool {
+  id: string;
+  liquidity: string;
+  publicSwap: boolean;
+  swapFee: string;
+  totalWeight: string;
+  tokens: GraphToken[];
+  tokensList: string[];
+}
+
 export interface PoolPairData {
     id: string;
     tokenIn: string;
